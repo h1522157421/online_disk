@@ -1,0 +1,140 @@
+#include "head.h"
+
+using namespace std;
+
+SDisk::SDisk()
+{
+
+}
+
+SDisk::~SDisk()
+{
+
+}
+
+int SDisk::user_login()
+{
+
+    char name[32];
+    char passwd[32];
+#if 1
+    if((recv(sockfd, m_resp, BUFF_SIZE, 0)) < 0) {
+        perror("Recv user_info error!");
+        exit(-1);
+    }
+	sscanf(m_resp,"%s%s", user.name, user.passwd);
+    strcpy(name, user.name);
+    strcpy(passwd, user.passwd);
+
+	const char* db = "online_disk",*server = "127.0.0.1",
+	      		*user = "root",*password = "111111";
+
+	MYSQL connection;
+	mysql_init(&connection);
+	char sql[256] = {0};
+
+    cout << name <<  " " << passwd << endl;
+    //strcpy(sql, "select * from user where username='name' and passwd='passwd'");
+	strcpy(sql,"select * from user where username=\"");
+	strcat(sql,name);
+	strcat(sql,"\" and passwd=\"");
+	strcat(sql,passwd);
+	strcat(sql,"\";");
+	if(mysql_real_connect(&connection,server,user,password,db,0,NULL,0))
+	{
+		int res = mysql_query(&connection,sql);
+		if(res)
+		{
+			cout<<"Select Error."<<endl;
+			return -1;
+		}
+		else
+		{
+			MYSQL_RES *res_ptr = mysql_store_result(&connection);
+			if(res_ptr)
+			{
+				int column = mysql_num_fields(res_ptr);//获取列数
+				int row = mysql_num_rows(res_ptr)+1;//获取行数，+1表示还有第一行字段名
+				if(row <= 1)
+				{
+					memset(m_resp,'0',BUFF_SIZE);
+					strcpy(m_resp,"-1");
+
+				}
+				else
+				{
+                    memset(m_resp, '0', BUFF_SIZE);
+                    strcpy(m_resp, "1");
+                    /*
+					MYSQL_ROW result_row = mysql_fetch_row(res_ptr);
+						cout<<"获取到UID是: "<<result_row[0]<<endl;
+					int uid = atoi(result_row[0]);
+					memset(m_cmd,0,BUFFER_SIZE);
+					strcpy(m_cmd,"获取的UID是:");
+					strcat(m_cmd,result_row[0]);
+					send(mysocket,m_cmd,strlen(m_cmd),0);
+                    */
+				}
+
+                if((send(sockfd, m_resp, BUFF_SIZE, 0)) < 0) {
+                     perror("Sent User_resp error!");
+                     exit(-1);
+                }
+
+			}
+		}
+
+	}
+	return 0;
+#endif
+}
+
+void SDisk::set_socket(int sock)
+{
+	sockfd = sock;
+}
+
+int SDisk:: disk_upload()
+{
+    struct File file;
+    memset(m_resp, '0', BUFF_SIZE);
+    if((recv(sockfd, m_resp, BUFF_SIZE, 0)) < 0) {
+        perror("Recv file info error!");
+        exit(-1);
+    }
+
+    memcpy((void *)file, m_resp, sizeof(file));
+    //sscanf(m_resp, "%")
+
+
+}
+
+
+
+/*
+int SDisk::disk_recvcmd()
+{
+	memset(m_resp,0,BUFFER_SIZE);
+	try
+	{
+		recv(mysocket,m_resp,BUFFER_SIZE,0);
+	}
+	catch (exception& e)
+	{
+		cout<<e.what()<<endl;
+		return -1;
+	}
+	return 0;
+}
+*/
+
+/*
+char* SDisk::get_resp()
+{
+	return m_resp;
+}
+
+*/
+
+
+
